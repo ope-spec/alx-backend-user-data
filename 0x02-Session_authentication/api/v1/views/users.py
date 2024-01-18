@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""Module for Users Views"""
-
+""" Module of Users views
+"""
 from api.v1.views import app_views
 from flask import abort, jsonify, request
 from models.user import User
 
 
 @app_views.route('/users', methods=['GET'], strict_slashes=False)
-def get_all_users() -> str:
+def view_all_users() -> str:
     """
     Get a list of all User objects in JSON representation.
     """
@@ -16,7 +16,7 @@ def get_all_users() -> str:
 
 
 @app_views.route('/users/<user_id>', methods=['GET'], strict_slashes=False)
-def get_one_user(user_id: str = None) -> str:
+def view_one_user(user_id: str = None) -> str:
     """
     Get JSON representation of a single User object.
     """
@@ -52,27 +52,27 @@ def delete_user(user_id: str = None) -> str:
 @app_views.route('/users', methods=['POST'], strict_slashes=False)
 def create_user() -> str:
     """
-    Create a new User object and return its JSON representation.
+    Create a new User object and return its JSON representation
     """
-    request_json = None
+    user_data = None
     error_msg = None
     try:
-        request_json = request.get_json()
+        user_data = request.get_json()
     except Exception as e:
-        request_json = None
-    if request_json is None:
+        user_data = None
+    if user_data is None:
         error_msg = "Wrong format"
-    if error_msg is None and request_json.get("email", "") == "":
+    if error_msg is None and user_data.get("email", "") == "":
         error_msg = "email missing"
-    if error_msg is None and request_json.get("password", "") == "":
+    if error_msg is None and user_data.get("password", "") == "":
         error_msg = "password missing"
     if error_msg is None:
         try:
             user = User()
-            user.email = request_json.get("email")
-            user.password = request_json.get("password")
-            user.first_name = request_json.get("first_name")
-            user.last_name = request_json.get("last_name")
+            user.email = user_data.get("email")
+            user.password = user_data.get("password")
+            user.first_name = user_data.get("first_name")
+            user.last_name = user_data.get("last_name")
             user.save()
             return jsonify(user.to_json()), 201
         except Exception as e:
@@ -90,16 +90,16 @@ def update_user(user_id: str = None) -> str:
     user = User.get(user_id)
     if user is None:
         abort(404)
-    request_json = None
+    user_data = None
     try:
-        request_json = request.get_json()
+        user_data = request.get_json()
     except Exception as e:
-        request_json = None
-    if request_json is None:
+        user_data = None
+    if user_data is None:
         return jsonify({'error': "Wrong format"}), 400
-    if request_json.get('first_name') is not None:
-        user.first_name = request_json.get('first_name')
-    if request_json.get('last_name') is not None:
-        user.last_name = request_json.get('last_name')
+    if user_data.get('first_name') is not None:
+        user.first_name = user_data.get('first_name')
+    if user_data.get('last_name') is not None:
+        user.last_name = user_data.get('last_name')
     user.save()
     return jsonify(user.to_json()), 200
