@@ -9,24 +9,28 @@ from sqlalchemy.exc import InvalidRequestError, IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 from user import Base, User
 
+
 Base.metadata.bind = create_engine("sqlite:///a.db", echo=True)
 
 
 class DB:
-    """DB class
+    """
+    DB class
     """
 
     def __init__(self) -> None:
-        """Initialize a new DB instance
         """
-        self._engine = create_engine("sqlite:///a.db", echo=True)
+        Initialize a new instance of the Database.
+        """
+        self._engine = create_engine("sqlite:///a.db", echo=False)
         Base.metadata.drop_all(self._engine)
         Base.metadata.create_all(self._engine)
         self.__session = None
 
     @property
     def _session(self) -> Session:
-        """Memoized session object
+        """
+        Memoized Session Object
         """
         if self.__session is None:
             DBSession = sessionmaker(bind=self._engine)
@@ -34,7 +38,8 @@ class DB:
         return self.__session
 
     def add_user(self, email: str, hashed_password: str) -> User:
-        """Add a new user to the database
+        """
+        Add User to the Database.
         """
         new_user = User(email=email, hashed_password=hashed_password)
         self._session.add(new_user)
@@ -42,35 +47,29 @@ class DB:
         return new_user
 
     def find_user_by(self, **kwargs) -> User:
-        """Find a user by the specified criteria
         """
-        try:
-            user = self._session.query(User).filter_by(**kwargs).first()
-            if user is None:
-                raise NoResultFound(
-                    "No result found for the specified criteria")
-            return user
-        except InvalidRequestError as e:
-            raise InvalidRequestError("Invalid request: {}".format(str(e)))
-        finally:
-            self._session.close()
+        Find User by specified attributes.
+        """
+        all_users = self._session.query(User)
+        for key, value in kwargs.items():
+            if key not in User.__dict__:
+                raise InvalidRequestError
+            for usr in all_users:
+                if getattr(usr, key) == value:
+                    return usr
+        raise NoResultFound
 
     def update_user(self, user_id: int, **kwargs) -> None:
-        """Update a user's attributes based on the provided arguments
+        """
+        Update User's attributes.
         """
         try:
             user = self.find_user_by(id=user_id)
-            for key, value in kwargs.items():
-                if hasattr(User, key):
-                    setattr(user, key, value)
-                else:
-                    raise ValueError("Invalid argument: {}".format(key))
-            self._session.commit()
-        except NoResultFound as e:
-            raise NoResultFound(
-                "No result found for user_id: {}".format(user_id))
-        except IntegrityError as e:
-            self._session.rollback()
-            raise IntegrityError("Integrity error: {}".format(str(e)))
-        finally:
-            self._session.close()
+        except NoResultFound:
+            raise ValueError()
+        for key, value in kwargs.items():
+            if hasattr(user, key):
+                setattr(user, key, value)
+            else:
+                raise ValueError
+        self._session.commit()
