@@ -17,8 +17,9 @@ def _hash_password(password: str) -> bytes:
     """
     Hash a password string and return it in bytes form.
     """
-    password = password.encode('utf-8')
-    return bcrypt.hashpw(password, bcrypt.gensalt())
+    passwd = password.encode('utf-8')
+    salted_hash = bcrypt.hashpw(passwd, bcrypt.gensalt())
+    return salted_hash
 
 
 def _generate_uuid() -> str:
